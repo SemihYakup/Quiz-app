@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div style="display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:start">
+
+  <!-- SOL: Form -->
+  <div class="card-base">
+    <h2 style="font-size:17px;font-weight:700;color:#1e1b4b;margin-bottom:6px">{{ quiz.title }}</h2>
+    <p style="font-size:13px;color:#94a3b8;margin-bottom:24px">{{ questions.count }} soru eklendi</p>
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="field-wrap">
+        <label>Soru Metni</label>
+        <textarea name="question" rows="3" required placeholder="Soruyu buraya yaz..."></textarea>
+      </div>
+
+      <div class="field-wrap">
+        <label>Görsel (isteğe bağlı)</label>
+        <div style="border:2px dashed #c7d2fe;border-radius:10px;padding:18px;text-align:center;cursor:pointer;background:#fafaff" onclick="document.getElementById('img-input').click()">
+          <div style="font-size:24px">🖼️</div>
+          <div style="font-size:13px;color:#64748b;margin-top:4px">Resim yükle</div>
+          <input type="file" id="img-input" name="image" accept="image/*" style="display:none" onchange="previewImg(this)">
+        </div>
+        <img id="preview" style="display:none;margin-top:10px;width:100%;max-height:160px;object-fit:cover;border-radius:8px">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div class="field-wrap" style="margin:0">
+          <label>A Şıkkı</label>
+          <input type="text" name="choice1" required placeholder="Şık A">
+        </div>
+        <div class="field-wrap" style="margin:0">
+          <label>B Şıkkı</label>
+          <input type="text" name="choice2" required placeholder="Şık B">
+        </div>
+        <div class="field-wrap" style="margin:0">
+          <label>C Şıkkı</label>
+          <input type="text" name="choice3" required placeholder="Şık C">
+        </div>
+        <div class="field-wrap" style="margin:0">
+          <label>D Şıkkı</label>
+          <input type="text" name="choice4" required placeholder="Şık D">
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field-wrap">
+          <label>Doğru Cevap</label>
+          <select name="correct" required>
+            <option value="">Seç</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+          </select>
+        </div>
+        <div class="field-wrap">
+          <label>Puan</label>
+          <input type="number" name="points" value="3" min="1" max="10">
+        </div>
+      </div>
+
+      <button type="submit" class="btn-main" style="width:100%;margin-top:8px">+ Soru Ekle</button>
+    </form>
+  </div>
+
+  <!-- SAĞ: Eklenen sorular -->
+  <div>
+    <div style="font-size:14px;font-weight:600;color:#1e293b;margin-bottom:12px">Eklenen Sorular</div>
+    {% for q in questions %}
+    <div style="background:white;border-radius:10px;border:1px solid #e2e8f0;padding:14px;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:500;color:#1e293b;margin-bottom:6px">{{ forloop.counter }}. {{ q.question_text|truncatechars:60 }}</div>
+      <div style="font-size:12px;color:#94a3b8">Doğru: <span style="color:#16a34a;font-weight:600">{{ q.correct_answer }}</span> · {{ q.points }} puan</div>
+      <form method="post" action="{% url 'quizapp:delete_question' quiz.pk q.pk %}" style="margin-top:8px">
+        {% csrf_token %}
+        <button class="btn-danger-sm" type="submit">Sil</button>
+      </form>
+    </div>
+    {% empty %}
+    <div style="background:white;border-radius:10px;border:1px solid #e2e8f0;padding:20px;text-align:center;color:#94a3b8;font-size:13px">
+      Henüz soru yok
+    </div>
+    {% endfor %}
+
+    {% if questions.count > 0 %}
+    <a href="{% url 'quizapp:home' %}" class="btn-secondary-outline" style="width:100%;text-align:center;margin-top:12px;display:block">Testi Yayınla ✓</a>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+function previewImg(input) {
+  if (input.files && input.files[0]) {
+    const r = new FileReader();
+    r.onload = e => {
+      const img = document.getElementById('preview');
+      img.src = e.target.result;
+      img.style.display = 'block';
+    };
+    r.readAsDataURL(input.files[0]);
+  }
+}
+</script>
+
+{% endblock %}

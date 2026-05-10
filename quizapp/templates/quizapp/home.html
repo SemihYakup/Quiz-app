@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div style="text-align:center;padding:40px 0 28px">
+  <h1 style="font-size:28px;font-weight:700;color:#1e1b4b;margin-bottom:8px">Tüm Testler</h1>
+  <p style="color:#64748b;font-size:15px">Bir test seç ve bilgini ölç</p>
+</div>
+
+{% if quizzes %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">
+  {% for quiz in quizzes %}
+  <a href="{% url 'quizapp:quiz_detail' quiz.pk %}" style="text-decoration:none">
+    <div style="background:white;border-radius:14px;border:1px solid #e2e8f0;padding:20px;transition:all 0.2s;cursor:pointer" onmouseover="this.style.borderColor='#4f46e5';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#e2e8f0';this.style.transform='translateY(0)'">
+      <div style="font-size:28px;margin-bottom:10px">📝</div>
+      {% if quiz.category %}
+        <span class="cat-badge" style="margin-bottom:8px;display:inline-block">{{ quiz.category }}</span>
+      {% endif %}
+      <div style="font-size:15px;font-weight:600;color:#1e293b;margin-bottom:6px">{{ quiz.title }}</div>
+      <div style="font-size:12px;color:#94a3b8">{{ quiz.question_count }} soru · {{ quiz.created_by.username }}</div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+
+{% else %}
+<div style="text-align:center;padding:60px 0">
+  <div style="font-size:52px;margin-bottom:16px">📭</div>
+  <h5 style="color:#64748b">Henüz test eklenmemiş.</h5>
+  {% if user.is_authenticated %}
+  <a href="{% url 'quizapp:create_quiz' %}" class="btn-main" style="margin-top:16px">İlk Testi Oluştur</a>
+  {% else %}
+  <a href="{% url 'quizapp:signup' %}" class="btn-main" style="margin-top:16px">Kayıt Ol ve Test Oluştur</a>
+  {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

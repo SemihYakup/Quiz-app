@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+  <h2 style="font-size:20px;font-weight:700;color:#1e1b4b;margin:0">Testlerim</h2>
+  <a href="{% url 'quizapp:create_quiz' %}" class="btn-main">+ Yeni Test</a>
+</div>
+
+{% for quiz in quizzes %}
+<div style="background:white;border-radius:12px;border:1px solid #e2e8f0;padding:18px 20px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:16px">
+  <div>
+    {% if quiz.category %}<span class="cat-badge" style="margin-bottom:6px;display:inline-block">{{ quiz.category }}</span>{% endif %}
+    <div style="font-size:15px;font-weight:600;color:#1e293b">{{ quiz.title }}</div>
+    <div style="font-size:12px;color:#94a3b8;margin-top:4px">{{ quiz.question_count }} soru · {{ quiz.created_at|date:"d M Y" }}</div>
+  </div>
+  <div style="display:flex;gap:8px;flex-shrink:0">
+    <a href="{% url 'quizapp:add_question' quiz.pk %}" class="btn-secondary-outline" style="padding:7px 14px;font-size:13px">Düzenle</a>
+    <a href="{% url 'quizapp:quiz_detail' quiz.pk %}" class="btn-main" style="padding:7px 14px;font-size:13px">Çöz</a>
+    <form method="post" action="{% url 'quizapp:delete_quiz' quiz.pk %}">
+      {% csrf_token %}
+      <button class="btn-danger-sm" style="padding:7px 12px" onclick="return confirm('Bu testi silmek istediğine emin misin?')">Sil</button>
+    </form>
+  </div>
+</div>
+{% empty %}
+<div style="text-align:center;padding:60px 0">
+  <div style="font-size:52px;margin-bottom:16px">📭</div>
+  <h5 style="color:#64748b">Henüz test oluşturmadın.</h5>
+  <a href="{% url 'quizapp:create_quiz' %}" class="btn-main" style="margin-top:16px">İlk Testini Oluştur</a>
+</div>
+{% endfor %}
+
+{% endblock %}

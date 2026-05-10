@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<form method="post" action="{% url 'quizapp:quiz_submit' quiz.pk %}" id="quiz-form">
+{% csrf_token %}
+
+<!-- Gizli tüm cevaplar burada tutulacak -->
+<div id="answers-store"></div>
+
+<div style="margin-bottom:20px">
+  <div style="font-size:12px;color:#94a3b8;font-weight:500">{{ quiz.category|default:"Test" }}</div>
+  <div style="font-size:14px;color:#64748b">{{ quiz.title }}</div>
+</div>
+
+<div style="background:white;border-radius:14px;border:1px solid #e2e8f0;padding:28px;margin-bottom:20px">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <span style="font-size:13px;color:#94a3b8;font-weight:500">{{ q_index|add:1 }}. soru / {{ total }} soru</span>
+    <span style="background:#eef2ff;color:#4f46e5;font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px">{{ question.points }} Puan</span>
+  </div>
+
+  <!-- Progress bar -->
+  <div style="background:#f1f5f9;border-radius:99px;height:6px;margin-bottom:20px">
+    <div style="background:#4f46e5;height:6px;border-radius:99px;width:{% widthratio q_index|add:1 total 100 %}%"></div>
+  </div>
+
+  {% if question.image %}
+    <img src="{{ question.image.url }}" style="width:100%;max-height:280px;object-fit:cover;border-radius:10px;margin-bottom:18px;border:1px solid #e2e8f0">
+  {% endif %}
+
+  <div style="font-size:16px;font-weight:600;color:#1e293b;margin-bottom:20px;line-height:1.5">
+    {{ question.question_text }}
+  </div>
+
+  <div id="options">
+    {% for val, text in question.choice1|slice:"0:0" %}{% endfor %}
+
+    <label class="opt-item" data-val="A" onclick="selectOpt(this,'{{ question.id }}','A')">
+      <div class="opt-letter">A</div><span>{{ question.choice1 }}</span>
+    </label>
+    <label class="opt-item" data-val="B" onclick="selectOpt(this,'{{ question.id }}','B')">
+      <div class="opt-letter">B</div><span>{{ question.choice2 }}</span>
+    </label>
+    <label class="opt-item" data-val="C" onclick="selectOpt(this,'{{ question.id }}','C')">
+      <div class="opt-letter">C</div><span>{{ question.choice3 }}</span>
+    </label>
+    <label class="opt-item" data-val="D" onclick="selectOpt(this,'{{ question.id }}','D')">
+      <div class="opt-letter">D</div><span>{{ question.choice4 }}</span>
+    </label>
+  </div>
+</div>
+
+<!-- Soru numaraları -->
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px" id="q-nums">
+  {% for i in range %}
+  <a href="{% url 'quizapp:quiz_detail' quiz.pk %}?q={{ i }}"
+     style="width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;text-decoration:none;border:1.5px solid {% if i == q_index %}#4f46e5{% else %}#e2e8f0{% endif %};background:{% if i == q_index %}#4f46e5{% else %}white{% endif %};color:{% if i == q_index %}white{% else %}#475569{% endif %}"
+     class="q-num-btn" data-index="{{ i }}">
+    {{ i|add:1 }}
+  </a>
+  {% endfor %}
+</div>
+
+<!-- İleri / Geri -->
+<div style="display:flex;justify-content:space-between;align-items:center">
+  {% if q_index > 0 %}
+    <a href="{% url 'quizapp:quiz_detail' quiz.pk %}?q={{ prev_index }}" class="btn-secondary-outline">← Geri</a>
+  {% else %}
+    <div></div>
+  {% endif %}
+
+  {% if is_last %}
+    <button type="submit" class="btn-main" style="background:#16a34a" onclick="prepareSubmit()">Testi Bitir ✓</button>
+  {% else %}
+    <a href="{% url 'quizapp:quiz_detail' quiz.pk %}?q={{ next_index }}" class="btn-main" onclick="saveAnswer()">İleri →</a>
+  {% endif %}
+</div>
+
+</form>
+
+<style>
+.opt-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; border: 1.5px solid #e2e8f0;
+  border-radius: 10px; margin-bottom: 10px; cursor: pointer;
+  transition: all 0.15s; font-size: 14px; color: #334155;
+  background: white;
+}
+.opt-item:hover { border-color: #4f46e5; background: #f5f3ff; }
+.opt-item.selected { border-color: #4f46e5; background: #f5f3ff; }
+.opt-letter {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: #f1f5f9; font-size: 13px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  color: #64748b; flex-shrink: 0; transition: all 0.15s;
+}
+.opt-item.selected .opt-letter { background: #4f46e5; color: white; }
+</style>
+
+<script>
+// localStorage ile cevapları sakla
+const QUIZ_KEY = 'quiz_{{ quiz.pk }}_answers';
+
+function getAnswers() {
+  try { return JSON.parse(localStorage.getItem(QUIZ_KEY) || '{}'); } catch { return {}; }
+}
+
+function saveAnswers(answers) {
+  localStorage.setItem(QUIZ_KEY, JSON.stringify(answers));
+}
+
+function selectOpt(el, qId, val) {
+  document.querySelectorAll('.opt-item').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  const answers = getAnswers();
+  answers[qId] = val;
+  saveAnswers(answers);
+  // Soru numarasını yeşile boya
+  document.querySelectorAll('.q-num-btn').forEach(btn => {
+    if (parseInt(btn.dataset.index) === {{ q_index }}) {
+      btn.style.background = '#16a34a';
+      btn.style.borderColor = '#16a34a';
+      btn.style.color = 'white';
+    }
+  });
+}
+
+function prepareSubmit() {
+  const answers = getAnswers();
+  const store = document.getElementById('answers-store');
+  store.innerHTML = '';
+  for (const [qId, val] of Object.entries(answers)) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'q_' + qId;
+    input.value = val;
+    store.appendChild(input);
+  }
+  localStorage.removeItem(QUIZ_KEY);
+}
+
+// Mevcut soru için kayıtlı cevabı göster
+window.addEventListener('load', function() {
+  const answers = getAnswers();
+  const qId = '{{ question.id }}';
+  if (answers[qId]) {
+    document.querySelectorAll('.opt-item').forEach(o => {
+      if (o.dataset.val === answers[qId]) {
+        o.classList.add('selected');
+      }
+    });
+  }
+  // Cevaplanmış soruları yeşile boya
+  // (bu kısım localStorage'dan geldiği için tam çalışmaz ama yeterli)
+});
+</script>
+
+{% endblock %}

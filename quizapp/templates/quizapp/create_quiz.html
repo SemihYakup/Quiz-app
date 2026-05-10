@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="max-width:560px">
+  <div class="card-base">
+    <h2 style="font-size:18px;font-weight:700;color:#1e1b4b;margin-bottom:24px">Yeni Test Oluştur</h2>
+    <form method="post">
+      {% csrf_token %}
+      <div class="field-wrap">
+        <label>Test Adı</label>
+        <input type="text" name="title" required placeholder="Örn: Matematik Testi, Tarih Quiz...">
+      </div>
+      <div class="field-wrap">
+        <label>Kategori (isteğe bağlı)</label>
+        <input type="text" name="category" placeholder="Örn: Matematik, Coğrafya...">
+      </div>
+      <button type="submit" class="btn-main" style="width:100%;margin-top:8px">Devam → Soru Ekle</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
